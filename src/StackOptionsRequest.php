@@ -37,21 +37,30 @@ class StackOptionsRequest implements HttpKernelInterface {
   /**
    * {@inheritDoc}
    */
-  public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-
+    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
     $response = $this->app->handle($request, $type, $catch);
 
-    if ($request->getMethod() == 'OPTIONS') {
-      $response->setContent(Null);
-      $response->setStatusCode(200);
-      $response->headers->set('Access-Control-Allow-Origin', '*');
-      $response->headers->set('Access-Control-Allow-Headers', 'Authorization');
-      $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-      
-      return $response;
+     // Allow from any origin
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+        $response->headers->set('Access-Control-Allow-Origin', "{$_SERVER['HTTP_ORIGIN']}");
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        $response->headers->set('Access-Control-Max-Age', '86400');
     }
+
+    // Allow headers for OPTIONS method [estas son mis lineas]
+    if ($request->getMethod() == 'OPTIONS') {
+        $response->setContent(Null);
+        $response->setStatusCode(200);
+   
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])){
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');         
+        }
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])){
+          $response->headers->set('Access-Control-Allow-Headers', "{$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");      
+        }
+    }
+    // Aqui terminan mis lineas
 
     return $response;
   }
-
 }
